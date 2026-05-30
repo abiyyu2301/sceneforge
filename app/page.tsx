@@ -1,42 +1,54 @@
 import Link from 'next/link';
 import { Film, Plus, ArrowRight } from 'lucide-react';
 import { ProjectCard } from '@/components/ProjectCard';
-import { prisma } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 async function getProjects() {
-  const projects = await prisma.project.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: {
-      scenes: {
-        select: {
-          id: true,
-          status: true,
-        },
-      },
-    },
-  });
-
-  return projects.map((project) => {
-    const totalScenes = project.scenes.length;
-    const doneScenes = project.scenes.filter(
-      (s) => s.status === 'DONE'
-    ).length;
-
-    let status: 'PENDING' | 'RENDERING' | 'DONE' = 'PENDING';
-    if (doneScenes === totalScenes && totalScenes > 0) {
-      status = 'DONE';
-    } else if (doneScenes > 0) {
-      status = 'RENDERING';
+  try {
+    const databaseUrl = process.env.DATABASE_URL || '';
+    if (!databaseUrl || databaseUrl.startsWith('prisma+postgres://localhost')) {
+      return [];
     }
 
-    return {
-      id: project.id,
-      title: project.title,
-      sceneCount: totalScenes,
-      createdAt: project.createdAt,
-      status,
-    };
-  });
+    const { prisma } = await import('@/lib/db');
+    const projects = await prisma.project.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        scenes: {
+          select: {
+            id: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    return projects.map((project) => {
+      const totalScenes = project.scenes.length;
+      const doneScenes = project.scenes.filter(
+        (s) => s.status === 'DONE'
+      ).length;
+
+      let status: 'PENDING' | 'RENDERING' | 'DONE' = 'PENDING';
+      if (doneScenes === totalScenes && totalScenes > 0) {
+        status = 'DONE';
+      } else if (doneScenes > 0) {
+        status = 'RENDERING';
+      }
+
+      return {
+        id: project.id,
+        title: project.title,
+        sceneCount: totalScenes,
+        createdAt: project.createdAt,
+        status,
+      };
+    });
+  } catch (error) {
+    console.error('Failed to load projects:', error);
+    return [];
+  }
 }
 
 export default async function HomePage() {

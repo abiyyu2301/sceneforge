@@ -1,38 +1,57 @@
-# Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS base
 
+# Install dependencies only when needed
+FROM base AS deps
 WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
 
 # Install dependencies
-COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci
 
-# Copy source code
+# Generate Prisma client
+RUN npx prisma generate
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
 COPY . .
 
-# Build the application
+# Build the Next.js app
 RUN npm run build
 
-# Stage 2: Production
-FROM node:20-alpine AS runner
-
+# Production image, copy all the files and run next
+FROM base AS runner
 WORKDIR /app
 
-# Set to production
 ENV NODE_ENV=production
+ENV PORT=3000
 
-# Install production dependencies only
-COPY package*.json ./
-RUN npm ci --only=production --legacy-peer-deps
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Copy built application from builder stage
-COPY --from=builder /app/.next ./.next
+# Copy necessary files
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/next.config.mjs ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Expose the port
+# Copy Prisma files for migrations
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Set correct permissions
+RUN chown -R nextjs:nodejs /app
+
+USER nextjs
+
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "server.js"]

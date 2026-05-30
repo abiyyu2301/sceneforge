@@ -7,33 +7,12 @@ import { ArrowLeft, ArrowRight, Loader2, Video, RefreshCw } from 'lucide-react';
 import { StoryboardSidebar } from './components/StoryboardSidebar';
 import { SceneViewer } from './components/SceneViewer';
 import { AdjustPanel } from './components/AdjustPanel';
-
-interface Scene {
-  id: string;
-  sceneNumber: number;
-  heading: string;
-  location: string;
-  timeOfDay: string;
-  actionText: string;
-  characters: string[];
-  dialogueJson: any[];
-  status: string;
-  videoUrl?: string;
-  thumbnailUrl?: string;
-  pixversePrompt?: string;
-  audioAmbient?: string;
-  audioMusic?: string;
-  audioPacing?: string;
-  shotType?: string;
-  cameraMovement?: string;
-  mood?: string;
-  lightingDesc?: string;
-}
+import type { StoryboardScene } from './types';
 
 interface Project {
   id: string;
   title: string;
-  scenes: Scene[];
+  scenes: StoryboardScene[];
 }
 
 export default function StoryboardPage() {
@@ -43,7 +22,7 @@ export default function StoryboardPage() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
+  const [selectedScene, setSelectedScene] = useState<StoryboardScene | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
   const fetchProject = useCallback(async () => {
@@ -72,11 +51,11 @@ export default function StoryboardPage() {
     return () => clearInterval(interval);
   }, [fetchProject]);
 
-  const handleSceneSelect = (scene: Scene) => {
+  const handleSceneSelect = (scene: StoryboardScene) => {
     setSelectedScene(scene);
   };
 
-  const handleSceneUpdate = async (updates: Partial<Scene>) => {
+  const handleSceneUpdate = async (updates: Partial<StoryboardScene>) => {
     if (!selectedScene) return;
 
     try {

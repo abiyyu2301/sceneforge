@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
+const inter = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-inter",
+});
+
+const jetbrainsMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
   title: "SceneForge - AI Screenplay Visualizer",

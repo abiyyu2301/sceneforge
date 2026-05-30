@@ -34,7 +34,9 @@ export function PromptInspector({ prompt, isOpen = false, onToggle }: PromptInsp
   const extractKeywords = (text: string): string[] => {
     const commonWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'and', 'or']);
     const words = text.toLowerCase().match(/\b[a-z]+\b/g) || [];
-    return [...new Set(words.filter(w => w.length > 3 && !commonWords.has(w)))].slice(0, 8);
+    return Array.from(
+      new Set(words.filter((w) => w.length > 3 && !commonWords.has(w)))
+    ).slice(0, 8);
   };
 
   const keywords = prompt ? extractKeywords(prompt) : [];

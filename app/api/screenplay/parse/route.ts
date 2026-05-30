@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { generateScreenplayScenes } from '@/lib/gemini';
+
+// Dynamically import gemini only at runtime to avoid build-time initialization
+async function generateScreenplayScenesWithGemini(screenplayText: string) {
+  const { generateScreenplayScenes } = await import('@/lib/gemini');
+  return generateScreenplayScenes(screenplayText);
+}
 
 // Fallback simple screenplay parser
 function parseScreenplayFallback(screenplayText: string) {
@@ -61,6 +66,12 @@ function parseScreenplayFallback(screenplayText: string) {
   return scenes;
 }
 
+// Dynamically import gemini only at runtime
+async function generateScreenplayScenes(screenplayText: string) {
+  const { generateScreenplayScenes: geminiGenerate } = await import('@/lib/gemini');
+  return geminiGenerate(screenplayText);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { projectId, screenplayText } = await req.json();
@@ -78,18 +89,27 @@ export async function POST(req: NextRequest) {
       data: { screenplayText },
     });
 
-    // Parse screenplay
-    const scenes = parseScreenplay(screenplayText);
+    // Try to parse with Gemini first, fallback to local parser
+    let scenes;
+    try {
+      console.log('Attempting to parse screenplay with Gemini...');
+      scenes = await generateScreenplayScenesWithGemini(screenplayText);
+      console.log(`Gemini parsed ${scenes.length} scenes successfully`);
+    } catch (geminiError) {
+      console.warn('Gemini parsing failed, falling back to local parser:', geminiError);
+      scenes = parseScreenplayFallback(screenplayText);
+      console.log(`Local parser extracted ${scenes.length} scenes`);
+    }
     
     // Extract unique character names
     const allCharacters = new Set<string>();
-    scenes.forEach(scene => {
+    scenes.forEach((scene: any) => {
       scene.characters.forEach((char: string) => allCharacters.add(char));
     });
 
     // Create scenes in database
     await prisma.$transaction(
-      scenes.map(scene => 
+      scenes.map((scene: any) => 
         prisma.scene.create({
           data: {
             projectId,
@@ -115,12 +135,12 @@ export async function POST(req: NextRequest) {
     const existingNames = new Set(existingCast.map((c: { characterName: string }) => c.characterName));
 
     const newCharacters = Array.from(allCharacters).filter(
-      name => !existingNames.has(name)
+      (name: string) => !existingNames.has(name)
     );
 
     if (newCharacters.length > 0) {
       await prisma.$transaction(
-        newCharacters.map(name =>
+        newCharacters.map((name: string) =>
           prisma.castMember.create({
             data: {
               projectId,

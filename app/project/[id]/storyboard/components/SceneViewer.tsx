@@ -5,31 +5,10 @@ import { VideoPlayer } from './VideoPlayer';
 import { AudioDirectionPanel } from './AudioDirectionPanel';
 import { PromptInspector } from './PromptInspector';
 import { FileText, Music, Code, ChevronDown, ChevronUp } from 'lucide-react';
-
-interface Scene {
-  id: string;
-  sceneNumber: number;
-  heading: string;
-  location: string;
-  timeOfDay: string;
-  actionText: string;
-  characters: string[];
-  dialogueJson: any[];
-  status: string;
-  videoUrl?: string;
-  thumbnailUrl?: string;
-  pixversePrompt?: string;
-  audioAmbient?: string;
-  audioMusic?: string;
-  audioPacing?: string;
-  shotType?: string;
-  cameraMovement?: string;
-  mood?: string;
-  lightingDesc?: string;
-}
+import type { StoryboardScene } from '../types';
 
 interface SceneViewerProps {
-  scene: Scene;
+  scene: StoryboardScene;
   onRegenerate: () => void;
 }
 
@@ -81,8 +60,8 @@ export function SceneViewer({ scene, onRegenerate }: SceneViewerProps) {
       {/* Video Player */}
       <div className="p-4">
         <VideoPlayer 
-          videoUrl={scene.videoUrl} 
-          thumbnailUrl={scene.thumbnailUrl}
+          videoUrl={scene.videoUrl ?? undefined} 
+          thumbnailUrl={scene.thumbnailUrl ?? undefined}
           isLoading={scene.status === 'RENDERING' || scene.status === 'GENERATING_PROMPT' || scene.status === 'SUBMITTING'}
         />
       </div>
@@ -161,15 +140,15 @@ export function SceneViewer({ scene, onRegenerate }: SceneViewerProps) {
 
         {activeTab === 'audio' && (
           <AudioDirectionPanel
-            ambient={scene.audioAmbient}
-            music={scene.audioMusic}
-            pacing={scene.audioPacing}
+            ambient={scene.audioAmbient ?? undefined}
+            music={scene.audioMusic ?? undefined}
+            pacing={scene.audioPacing ?? undefined}
           />
         )}
 
         {activeTab === 'prompt' && (
           <PromptInspector
-            prompt={scene.pixversePrompt}
+            prompt={scene.pixversePrompt ?? undefined}
             isOpen={isPromptOpen}
             onToggle={() => setIsPromptOpen(!isPromptOpen)}
           />

@@ -18,6 +18,8 @@ interface Scene {
   id: string;
   sceneNumber: number;
   heading: string;
+  location: string;
+  timeOfDay: string;
   status: string;
   videoUrl?: string;
   errorMessage?: string;

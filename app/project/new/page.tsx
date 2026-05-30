@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Loader2, FileText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, FileText } from 'lucide-react';
 
 // Mock screenplay data for demo
 const MOCK_SCREENPLAY = `INT. COFFEE SHOP - DAY
@@ -143,7 +143,6 @@ export default function NewProjectPage() {
     setError(null);
 
     try {
-      // Try to call the API, but if it fails (no DB), just redirect with mock data
       const projectRes = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -151,10 +150,8 @@ export default function NewProjectPage() {
       });
 
       if (!projectRes.ok) {
-        // If API fails (likely no DB), redirect to cast page with mock project ID
-        console.log('API failed, using mock redirect');
-        router.push(`/project/mock-${Date.now()}/cast`);
-        return;
+        const payload = await projectRes.json().catch(() => null);
+        throw new Error(payload?.error || 'Failed to create project');
       }
 
       const { id: projectId } = await projectRes.json();
@@ -167,15 +164,15 @@ export default function NewProjectPage() {
       });
 
       if (!parseRes.ok) {
-        throw new Error('Failed to parse screenplay');
+        const payload = await parseRes.json().catch(() => null);
+        throw new Error(payload?.error || 'Failed to parse screenplay');
       }
 
       // Redirect to cast page
       router.push(`/project/${projectId}/cast`);
     } catch (err) {
       console.error('Error:', err);
-      // Even on error, redirect to mock page for demo
-      router.push(`/project/mock-${Date.now()}/cast`);
+      setError(err instanceof Error ? err.message : 'Something went wrong while creating the project');
     } finally {
       setLoading(false);
     }

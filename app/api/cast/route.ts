@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { mkdir, writeFile } from 'fs/promises';
+import path from 'path';
+import { uploadImageToPixVerse } from '@/lib/pixverse';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,12 +25,47 @@ export async function POST(req: NextRequest) {
     }
 
     let referenceImagePath = undefined;
+    let pixverseImgId = undefined;
     
     // Handle image upload if provided
     if (image) {
-      // In a real implementation, upload to GCS here
-      // For now, we'll store a placeholder
-      referenceImagePath = `/uploads/${projectId}-${characterName}.${image.name.split('.').pop()}`;
+      const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+      if (!allowedTypes.has(image.type)) {
+        return NextResponse.json(
+          { error: 'Unsupported image type. Use JPG, PNG, or WEBP.' },
+          { status: 400 }
+        );
+      }
+
+      if (image.size > 20 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: 'Image must be 20MB or smaller.' },
+          { status: 400 }
+        );
+      }
+
+      const ext = image.name.split('.').pop() || 'jpg';
+      const safeCharacterName = characterName.replace(/[^a-z0-9-_]/gi, '_');
+      const fileName = `${projectId}-${safeCharacterName}-${Date.now()}.${ext}`;
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+      const filePath = path.join(uploadsDir, fileName);
+      const imageBuffer = Buffer.from(await image.arrayBuffer());
+
+      await mkdir(uploadsDir, { recursive: true });
+      await writeFile(filePath, imageBuffer);
+
+      referenceImagePath = `/uploads/${fileName}`;
+
+      try {
+        const uploadResult = await uploadImageToPixVerse(
+          imageBuffer,
+          image.name,
+          image.type || 'image/jpeg'
+        );
+        pixverseImgId = String(uploadResult.imgId);
+      } catch (uploadError) {
+        console.error('PixVerse image upload failed:', uploadError);
+      }
     }
 
     const castMember = await prisma.castMember.upsert({
@@ -40,11 +81,13 @@ export async function POST(req: NextRequest) {
         actorName: actorName || undefined,
         physicalDescription: physicalDescription || undefined,
         referenceImagePath: referenceImagePath || undefined,
+          pixverseImgId,
       },
       update: {
         actorName: actorName !== undefined ? actorName || undefined : undefined,
         physicalDescription: physicalDescription !== undefined ? physicalDescription || undefined : undefined,
         referenceImagePath: referenceImagePath || undefined,
+        pixverseImgId: pixverseImgId || undefined,
       },
     });
 

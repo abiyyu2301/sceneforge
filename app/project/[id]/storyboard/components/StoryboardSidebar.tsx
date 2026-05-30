@@ -1,22 +1,12 @@
 'use client';
 
 import { CheckCircle2, AlertCircle, Clock, Film, Loader2 } from 'lucide-react';
-
-interface Scene {
-  id: string;
-  sceneNumber: number;
-  heading: string;
-  location: string;
-  timeOfDay: string;
-  status: string;
-  thumbnailUrl?: string;
-  videoUrl?: string;
-}
+import type { StoryboardScene } from '../types';
 
 interface StoryboardSidebarProps {
-  scenes: Scene[];
-  selectedScene: Scene | null;
-  onSceneSelect: (scene: Scene) => void;
+  scenes: StoryboardScene[];
+  selectedScene: StoryboardScene | null;
+  onSceneSelect: (scene: StoryboardScene) => void;
 }
 
 export function StoryboardSidebar({
@@ -86,7 +76,7 @@ export function StoryboardSidebar({
               <div className="flex-shrink-0 w-12 h-12 bg-[#141414] rounded-lg flex items-center justify-center overflow-hidden">
                 {scene.thumbnailUrl || scene.videoUrl ? (
                   <img
-                    src={scene.thumbnailUrl || scene.videoUrl}
+                    src={scene.thumbnailUrl || scene.videoUrl || undefined}
                     alt={`Scene ${scene.sceneNumber}`}
                     className="w-full h-full object-cover"
                   />

@@ -2,19 +2,11 @@
 
 import { useState } from 'react';
 import { RefreshCw, Wand2, Settings2 } from 'lucide-react';
-
-interface Scene {
-  id: string;
-  shotType?: string;
-  cameraMovement?: string;
-  mood?: string;
-  lightingDesc?: string;
-  duration?: number;
-}
+import type { StoryboardScene } from '../types';
 
 interface AdjustPanelProps {
-  scene: Scene;
-  onUpdate: (updates: Partial<Scene>) => void;
+  scene: StoryboardScene;
+  onUpdate: (updates: Partial<StoryboardScene>) => void;
   onRegenerate: () => void;
 }
 

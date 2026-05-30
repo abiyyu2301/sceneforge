@@ -53,6 +53,7 @@ export default function CastPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isMock, setIsMock] = useState(false);
 
   useEffect(() => {
@@ -75,26 +76,17 @@ export default function CastPage() {
     try {
       const res = await fetch(`/api/projects/${projectId}`);
       if (!res.ok) {
-        // If API fails, use mock data
-        setIsMock(true);
-        setProject({
-          id: projectId,
-          title: 'The Last Witness',
-          castMembers: MOCK_CAST,
-        });
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error || 'Failed to load project');
       } else {
         const data = await res.json();
         setProject(data);
+        setError(null);
       }
     } catch (error) {
       console.error('Error fetching project:', error);
-      // Use mock data on error
-      setIsMock(true);
-      setProject({
-        id: projectId,
-        title: 'The Last Witness',
-        castMembers: MOCK_CAST,
-      });
+      setProject(null);
+      setError(error instanceof Error ? error.message : 'Failed to load project');
     } finally {
       setLoading(false);
     }
@@ -143,6 +135,7 @@ export default function CastPage() {
       await fetchProject();
     } catch (error) {
       console.error('Error updating cast member:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update cast member');
     }
   };
 
@@ -198,6 +191,11 @@ export default function CastPage() {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-6 py-10">
+        {error && (
+          <div className="mb-6 rounded-lg border border-error/20 bg-error/10 px-4 py-3 text-sm text-error">
+            {error}
+          </div>
+        )}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
