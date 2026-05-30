@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  title          String
+  screenplayText String   @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  scenes      Scene[]
+  castMembers CastMember[]
+}
+
+model Scene {
+  id               String  @id @default(cuid())
+  projectId        String
+  sceneNumber      Int
+  heading          String
+  location         String
+  timeOfDay        String
+  characters       String[]
+  actionText       String   @db.Text
+  dialogueJson     Json
+  emotionalRegister String
+  pacing           String
+
+  // Generated prompt data
+  pixversePrompt   String?  @db.Text
+  negativePrompt   String?
+  shotType         String?
+  cameraMovement   String?
+  focalLength      String?
+  mood             String?
+  lightingDesc     String?
+  audioAmbient     String?
+  audioMusic       String?
+  audioPacing      String?
+
+  // PixVerse job tracking
+  pixverseVideoId  String?
+  pixverseImgId    String?
+  videoUrl         String?
+  status           SceneStatus @default(PENDING)
+  errorMessage     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, sceneNumber])
+  @@index([projectId])
+}
+
+model CastMember {
+  id                  String  @id @default(cuid())
+  projectId           String
+  characterName       String
+  actorName           String?
+  physicalDescription String?  @db.Text
+  referenceImagePath  String?
+  pixverseImgId       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, characterName])
+  @@index([projectId])
+}
+
+enum SceneStatus {
+  PENDING
+  GENERATING_PROMPT
+  SUBMITTING
+  RENDERING
+  DONE
+  FAILED
+}

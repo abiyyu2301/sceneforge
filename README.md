@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SceneForge - AI Screenplay Visualizer
 
-## Getting Started
+Transform screenplays into cinematic video storyboards with AI. SceneForge parses your screenplay, generates AI prompts for each scene, and creates video storyboards using PixVerse.
 
-First, run the development server:
+## 🎬 Features
 
+- **Screenplay Parser** - Automatically parse screenplays into scenes
+- **Cast Registry** - Manage characters with reference photos
+- **AI Prompt Generation** - Generate cinematographic prompts for each scene
+- **Video Generation** - Create video storyboards via PixVerse
+- **Storyboard Viewer** - View all scenes with video playback
+- **Scene Adjustment** - Fine-tune shot type, mood, lighting, and more
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL database
+- Google Cloud account (for Vertex AI)
+- PixVerse account (for video generation)
+
+### Installation
+
+1. **Clone and install dependencies:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd sceneforge
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Set up environment variables:**
+```bash
+cp .env.example .env.local
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Edit `.env.local` with your configuration:
+```env
+# Database
+DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/sceneforge"
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Google Cloud / Vertex AI
+GOOGLE_CLOUD_PROJECT=your-gcp-project-id
+GOOGLE_CLOUD_LOCATION=us-central1
+GEMINI_MODEL=gemini-2.5-pro
 
-## Learn More
+# PixVerse
+PIXVERSE_API_KEY=your-pixverse-api-key
 
-To learn more about Next.js, take a look at the following resources:
+# App
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Set up the database:**
+```bash
+npx prisma migrate dev --name init
+npx prisma generate
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Run the development server:**
+```bash
+npm run dev
+```
 
-## Deploy on Vercel
+5. **Open in browser:**
+http://localhost:3000
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📁 Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+sceneforge/
+├── app/                          # Next.js App Router
+│   ├── api/                      # API routes
+│   │   ├── cast/route.ts         # Cast member CRUD
+│   │   ├── projects/             # Project CRUD
+│   │   ├── scenes/               # Scene generation
+│   │   └── screenplay/parse/     # Screenplay parser
+│   ├── project/[id]/
+│   │   ├── cast/page.tsx         # Cast registry page
+│   │   ├── generate/page.tsx     # Scene generation page
+│   │   └── storyboard/           # Storyboard viewer
+│   │       ├── components/       # Storyboard components
+│   │       └── page.tsx
+│   ├── project/new/page.tsx      # Create project page
+│   ├── globals.css               # Global styles
+│   ├── layout.tsx                # Root layout
+│   └── page.tsx                  # Home page
+├── components/                   # Reusable components
+│   ├── CastCard.tsx
+│   └── ProjectCard.tsx
+├── lib/                          # Utilities
+│   ├── db.ts                     # Prisma client
+│   └── gemini.ts                 # Vertex AI integration
+├── prisma/
+│   └── schema.prisma             # Database schema
+└── next.config.js
+```
+
+## 🎯 Usage Flow
+
+1. **Create Project**: Enter title and paste your screenplay
+2. **Cast Registry**: Upload reference photos for characters (optional)
+3. **Generate Scenes**: AI generates prompts and creates videos
+4. **View Storyboard**: Browse all scenes with video playback
+5. **Adjust Scenes**: Fine-tune shot type, mood, lighting, and regenerate
+
+## 🔧 Development
+
+### Database Commands
+```bash
+# Generate Prisma client
+npx prisma generate
+
+# Run migrations
+npx prisma migrate dev
+
+# Open Prisma Studio
+npx prisma studio
+```
+
+### Build for Production
+```bash
+npm run build
+npm start
+```
+
+## 📝 License
+
+MIT License - feel free to use this for your projects!
+
+## 🙏 Acknowledgments
+
+- Built with Next.js, Tailwind CSS, and Prisma
+- Video generation powered by PixVerse
+- AI prompts generated with Google Vertex AI Gemini

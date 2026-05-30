@@ -1,0 +1,37 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/sceneforge-497904/sceneforge:latest'
+      - '.'
+  
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/sceneforge-497904/sceneforge:latest'
+  
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'sceneforge'
+      - '--image'
+      - 'gcr.io/sceneforge-497904/sceneforge:latest'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'GOOGLE_CLOUD_PROJECT=sceneforge-497904,GOOGLE_CLOUD_LOCATION=us-central1,GEMINI_MODEL=gemini-2.5-pro,NEXT_PUBLIC_APP_URL=https://sceneforge-abc123-uc.a.run.app,PIXVERSE_API_KEY=sk-cb74d4451f2b78e5b998494002fdcba3'
+
+images:
+  - 'gcr.io/sceneforge-497904/sceneforge:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
